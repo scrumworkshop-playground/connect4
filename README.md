@@ -1,4 +1,4 @@
-# Connect 4
+ # Connect 4
 
 This is a simple terminal-based Connect 4 game for two players (X and O) on a 6 rows and 7 columns board.
 
