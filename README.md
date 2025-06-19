@@ -1,6 +1,6 @@
 # Connect 4
 
-This is a simple terminal-based Connect 4 game for two players (X and O) on a 6x7 board.
+This is a simple terminal-based Connect 4 game for two players (X and O) on a 6 rows and 7 columns board.
 
 ## How to Run
 
@@ -44,7 +44,7 @@ This is a simple terminal-based Connect 4 game for two players (X and O) on a 6x
 - `<STONE>` is either `X` or `O` and specifies which stone the AI will play for this turn.
 - If `<STONE>` is omitted, the AI defaults to `O`.
 
-#### 3. AI Move
+#### 3. AIs Move
 - The program parses the board and determines the AI's move using its strategy.
 - The AI always plays a single move for the specified stone.
 
