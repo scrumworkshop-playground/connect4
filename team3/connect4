@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+import sys
+
+ROWS = 6
+COLS = 7
+
+def read_board():
+    """Reads the board from stdin."""
+    board = []
+    for _ in range(ROWS):
+        board.append(sys.stdin.readline().strip().split())
+    return board
+
+def get_player():
+    """Gets the player from command-line arguments."""
+    if len(sys.argv) > 1 and sys.argv[1] == 'X':
+        return 'X'
+    return 'O'
+
+def get_valid_moves(board):
+    """Returns a list of valid moves."""
+    valid_moves = []
+    for col in range(COLS):
+        if board[0][col] == '-':
+            valid_moves.append(col)
+    return valid_moves
+
+def choose_move(board, player):
+    """A simple AI to choose a move."""
+    valid_moves = get_valid_moves(board)
+    if not valid_moves:
+        return -1
+    
+    # Just choose the first valid move for now
+    return valid_moves[0] + 1
+
+def main():
+    """Main game logic."""
+    board = read_board()
+    player = get_player()
+    move = choose_move(board, player)
+    print(move)
+
+if __name__ == "__main__":
+    main() 
