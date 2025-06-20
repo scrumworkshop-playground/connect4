@@ -1,0 +1,178 @@
+#!/usr/bin/env python3
+"""
+Connect 4 AI Player
+
+This program implements a Connect 4 AI that follows the protocol:
+- Reads board state from STDIN (6 rows x 7 columns)
+- Takes stone type (X or O) as command line argument
+- Outputs column number (1-7) or -1 if no valid moves
+"""
+
+import sys
+import random
+
+
+class Connect4AI:
+    def __init__(self, rows=6, cols=7):
+        self.rows = rows
+        self.cols = cols
+        self.board = []
+    
+    def read_board(self):
+        """Read the board state from STDIN"""
+        self.board = []
+        for _ in range(self.rows):
+            line = input().strip()
+            row = line.split()
+            if len(row) != self.cols:
+                raise ValueError(f"Invalid row length: expected {self.cols}, got {len(row)}")
+            self.board.append(row)
+    
+    def is_valid_move(self, col):
+        """Check if a column is a valid move (0-indexed)"""
+        if col < 0 or col >= self.cols:
+            return False
+        return self.board[0][col] == '-'
+    
+    def get_valid_moves(self):
+        """Get all valid column moves (0-indexed)"""
+        return [col for col in range(self.cols) if self.is_valid_move(col)]
+    
+    def simulate_move(self, col, stone):
+        """Simulate dropping a stone in the given column and return the row where it lands"""
+        for row in range(self.rows - 1, -1, -1):
+            if self.board[row][col] == '-':
+                return row
+        return -1
+    
+    def check_win(self, board, row, col, stone):
+        """Check if placing a stone at (row, col) creates a win"""
+        directions = [(0, 1), (1, 0), (1, 1), (1, -1)]  # right, down, diag-right, diag-left
+        
+        for dr, dc in directions:
+            count = 1  # Count the stone we just placed
+            
+            # Check in both directions
+            for direction in [-1, 1]:
+                r, c = row + direction * dr, col + direction * dc
+                while (0 <= r < self.rows and 0 <= c < self.cols and 
+                       board[r][c] == stone):
+                    count += 1
+                    r += direction * dr
+                    c += direction * dc
+            
+            if count >= 4:
+                return True
+        return False
+    
+    def evaluate_move(self, col, stone):
+        """Evaluate the quality of a move using heuristics"""
+        # Create a copy of the board to simulate the move
+        board_copy = [row[:] for row in self.board]
+        row = self.simulate_move(col, stone)
+        if row == -1:
+            return -1000  # Invalid move
+        
+        board_copy[row][col] = stone
+        score = 0
+        
+        # Check if this move wins the game
+        if self.check_win(board_copy, row, col, stone):
+            return 1000  # Winning move
+        
+        # Check if we need to block opponent's winning move
+        opponent = 'X' if stone == 'O' else 'O'
+        board_copy[row][col] = opponent
+        if self.check_win(board_copy, row, col, opponent):
+            score += 500  # Blocking opponent's win
+        
+        # Prefer center columns
+        center_distance = abs(col - 3)
+        score += (3 - center_distance) * 10
+        
+        # Prefer moves that create multiple threats
+        board_copy[row][col] = stone
+        score += self.count_threats(board_copy, stone) * 50
+        
+        return score
+    
+    def count_threats(self, board, stone):
+        """Count potential winning opportunities for the given stone"""
+        threats = 0
+        directions = [(0, 1), (1, 0), (1, 1), (1, -1)]
+        
+        for row in range(self.rows):
+            for col in range(self.cols):
+                if board[row][col] == stone:
+                    for dr, dc in directions:
+                        # Count consecutive stones in this direction
+                        count = 1
+                        r, c = row + dr, col + dc
+                        while (0 <= r < self.rows and 0 <= c < self.cols and 
+                               board[r][c] == stone):
+                            count += 1
+                            r += dr
+                            c += dc
+                        
+                        # Check if we can extend this line to 4
+                        if count >= 2:
+                            # Check if there's space to extend
+                            if (0 <= r < self.rows and 0 <= c < self.cols and 
+                                board[r][c] == '-'):
+                                threats += count - 1
+        
+        return threats
+    
+    def choose_move(self, stone):
+        """Choose the best move using AI strategy"""
+        valid_moves = self.get_valid_moves()
+        if not valid_moves:
+            return -1
+        
+        # Evaluate all valid moves
+        move_scores = []
+        for col in valid_moves:
+            score = self.evaluate_move(col, stone)
+            move_scores.append((score, col))
+        
+        # Sort by score (highest first)
+        move_scores.sort(reverse=True)
+        
+        # If multiple moves have the same best score, choose randomly among them
+        best_score = move_scores[0][0]
+        best_moves = [col for score, col in move_scores if score == best_score]
+        
+        return random.choice(best_moves)
+
+
+def main():
+    # Parse command line arguments
+    if len(sys.argv) > 1:
+        stone = sys.argv[1].upper()
+        if stone not in ['X', 'O']:
+            print("Error: Stone must be X or O", file=sys.stderr)
+            sys.exit(1)
+    else:
+        stone = 'O'  # Default to O if no argument provided
+    
+    try:
+        # Create AI and read board
+        ai = Connect4AI()
+        ai.read_board()
+        
+        # Choose move
+        move = ai.choose_move(stone)
+        
+        # Output result (convert from 0-indexed to 1-indexed)
+        if move == -1:
+            print(-1)
+        else:
+            print(move + 1)
+    
+    except Exception as e:
+        print("Error reading board or making move", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main() 
